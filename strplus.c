@@ -124,10 +124,20 @@ static int strplus_add_handler(zend_execute_data *execute_data)
 	return ZEND_USER_OPCODE_DISPATCH;
 }
 
+/* {{{ php_strplus_init_globals
+ */
+static void php_strplus_init_globals(zend_strplus_globals *strplus_globals)
+{
+	strplus_globals->enabled = 1;
+}
+/* }}} */
+
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(strplus)
 {
+	ZEND_INIT_MODULE_GLOBALS(strplus, php_strplus_init_globals, NULL);
+
 	REGISTER_INI_ENTRIES();
 
 	zend_set_user_opcode_handler(ZEND_ADD, strplus_add_handler);
