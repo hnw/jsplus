@@ -31,6 +31,7 @@ ZEND_DECLARE_MODULE_GLOBALS(strplus)
 
 /* True global resources - no need for thread safety here */
 static int le_strplus;
+zend_ast_process_t original_ast_process = NULL;
 
 /* {{{ PHP_INI
  */
@@ -38,34 +39,6 @@ PHP_INI_BEGIN()
     STD_PHP_INI_BOOLEAN("strplus.enabled","1", PHP_INI_SYSTEM, OnUpdateBool, enabled, zend_strplus_globals, strplus_globals)
 PHP_INI_END()
 /* }}} */
-
-/* Remove the following function when you have successfully modified config.m4
-   so that your module can be compiled into PHP, it exists only for testing
-   purposes. */
-
-/* Every user-visible function in PHP should document itself in the source */
-/* {{{ proto string confirm_strplus_compiled(string arg)
-   Return a string to confirm that the module is compiled in */
-PHP_FUNCTION(confirm_strplus_compiled)
-{
-	char *arg = NULL;
-	size_t arg_len, len;
-	zend_string *strg;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	strg = strpprintf(0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "strplus", arg);
-
-	RETURN_STR(strg);
-}
-/* }}} */
-/* The previous line is meant for vim and emacs, so it can correctly fold and
-   unfold functions in source code. See the corresponding marks just before
-   function definition, where the functions purpose is also documented. Please
-   follow this convention for the convenience of others editing your code.
-*/
 
 static zval *strplus_get_zval_ptr_tmpvar(zend_execute_data *execute_data, uint32_t var)
 {
@@ -124,6 +97,55 @@ static int strplus_add_handler(zend_execute_data *execute_data)
 	return ZEND_USER_OPCODE_DISPATCH;
 }
 
+static int ast_is_decl(zend_ast *ast) /* {{{ */
+{
+    return (
+        ast->kind == ZEND_AST_FUNC_DECL ||
+        ast->kind == ZEND_AST_CLOSURE ||
+        ast->kind == ZEND_AST_METHOD ||
+        ast->kind == ZEND_AST_CLASS
+    );
+}
+/* }}} */
+
+void strplus_ast_process(zend_ast *ast)
+{
+	int i, num_children = 0;
+	zend_ast **children;
+
+	if (zend_ast_is_list(ast)) {
+		zend_ast_list *list = (zend_ast_list*)ast;
+		num_children = list->children;
+		children = list->child;
+	} else if (ast_is_decl(ast)) {
+		zend_ast_decl *decl = (zend_ast_decl*)ast;
+		num_children = 4;
+		children = decl->child;
+	} else {
+		num_children = zend_ast_get_num_children(ast);
+		children = ast->child;
+	}
+
+	for (i = 0; i < num_children; i++) {
+		if (children[i]) {
+			strplus_ast_process(children[i]);
+		}
+	}
+	if (ast->kind == ZEND_AST_BINARY_OP) {
+		uint32_t opcode = ast->attr;
+		if (opcode == ZEND_ADD &&
+			ast->child[0]->kind == ZEND_AST_ZVAL &&
+			ast->child[1]->kind == ZEND_AST_ZVAL) {
+			zval *op1, *op2;
+			op1 = zend_ast_get_zval(ast->child[0]);
+			op2 = zend_ast_get_zval(ast->child[1]);
+			if (Z_TYPE_P(op1) == IS_STRING && Z_TYPE_P(op2) == IS_STRING) {
+				ast->attr = ZEND_CONCAT;
+			}
+		}
+	}
+}
+
 /* {{{ php_strplus_init_globals
  */
 static void php_strplus_init_globals(zend_strplus_globals *strplus_globals)
@@ -140,9 +162,6 @@ PHP_MINIT_FUNCTION(strplus)
 
 	REGISTER_INI_ENTRIES();
 
-	zend_set_user_opcode_handler(ZEND_ADD, strplus_add_handler);
-	zend_set_user_opcode_handler(ZEND_ASSIGN_ADD, strplus_add_handler);
-	
 	return SUCCESS;
 }
 /* }}} */
@@ -151,9 +170,6 @@ PHP_MINIT_FUNCTION(strplus)
  */
 PHP_MSHUTDOWN_FUNCTION(strplus)
 {
-	zend_set_user_opcode_handler(ZEND_ADD, NULL);
-	zend_set_user_opcode_handler(ZEND_ASSIGN_ADD, NULL);
-	
 	UNREGISTER_INI_ENTRIES();
 
 	return SUCCESS;
@@ -168,6 +184,13 @@ PHP_RINIT_FUNCTION(strplus)
 #if defined(COMPILE_DL_STRPLUS) && defined(ZTS)
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
+
+	original_ast_process = zend_ast_process;
+	zend_ast_process = strplus_ast_process;
+
+	zend_set_user_opcode_handler(ZEND_ADD, strplus_add_handler);
+	zend_set_user_opcode_handler(ZEND_ASSIGN_ADD, strplus_add_handler);
+
 	return SUCCESS;
 }
 /* }}} */
@@ -177,6 +200,12 @@ PHP_RINIT_FUNCTION(strplus)
  */
 PHP_RSHUTDOWN_FUNCTION(strplus)
 {
+	zend_ast_process = original_ast_process;
+	original_ast_process = NULL;
+
+	zend_set_user_opcode_handler(ZEND_ADD, NULL);
+	zend_set_user_opcode_handler(ZEND_ASSIGN_ADD, NULL);
+
 	return SUCCESS;
 }
 /* }}} */
@@ -198,7 +227,6 @@ PHP_MINFO_FUNCTION(strplus)
  * Every user visible function must have an entry in strplus_functions[].
  */
 const zend_function_entry strplus_functions[] = {
-	PHP_FE(confirm_strplus_compiled,	NULL)		/* For testing, remove later. */
 	PHP_FE_END	/* Must be the last line in strplus_functions[] */
 };
 /* }}} */
