@@ -113,6 +113,10 @@ void strplus_ast_process(zend_ast *ast)
 	int i, num_children = 0;
 	zend_ast **children;
 
+	if (!STRPLUS_G(enabled)) {
+		return;
+	}
+
 	if (zend_ast_is_list(ast)) {
 		zend_ast_list *list = (zend_ast_list*)ast;
 		num_children = list->children;
