@@ -87,12 +87,6 @@ static int jsplus_add_handler(zend_execute_data *execute_data)
 		op2 = jsplus_get_zval_ptr(execute_data, opline->op2_type, opline->op2);
 
 		if (Z_TYPE_P(op1) == IS_STRING || Z_TYPE_P(op2) == IS_STRING) {
-			if (Z_TYPE_P(op1) != IS_STRING && opline->op1_type == IS_CONST) {
-				ZVAL_STR(op1, zval_get_string(op1));
-			}
-			if (Z_TYPE_P(op2) != IS_STRING && opline->op2_type == IS_CONST) {
-				ZVAL_STR(op2, zval_get_string(op2));
-			}
 			if (cur_opcode->opcode == ZEND_ADD) {
 				return ZEND_USER_OPCODE_DISPATCH_TO | ZEND_CONCAT;
 			} else if (cur_opcode->opcode == ZEND_ASSIGN_ADD) {
@@ -143,14 +137,28 @@ void jsplus_ast_process(zend_ast *ast)
 	}
 	if (ast->kind == ZEND_AST_BINARY_OP) {
 		uint32_t opcode = ast->attr;
-		if (opcode == ZEND_ADD &&
-			ast->child[0]->kind == ZEND_AST_ZVAL &&
-			ast->child[1]->kind == ZEND_AST_ZVAL) {
-			zval *op1, *op2;
-			op1 = zend_ast_get_zval(ast->child[0]);
-			op2 = zend_ast_get_zval(ast->child[1]);
-			if (Z_TYPE_P(op1) == IS_STRING || Z_TYPE_P(op2) == IS_STRING) {
-				ast->attr = ZEND_CONCAT;
+		if (opcode == ZEND_ADD) {
+			if (ast->child[0]->kind == ZEND_AST_ZVAL) {
+				zval *op1;
+				op1 = zend_ast_get_zval(ast->child[0]);
+				if (Z_TYPE_P(op1) == IS_STRING) {
+					ast->child[0] = zend_ast_create_cast(IS_STRING, ast->child[0]);
+				} else if (Z_TYPE_P(op1) == IS_LONG) {
+					ast->child[0] = zend_ast_create_cast(IS_LONG, ast->child[0]);
+				} else if (Z_TYPE_P(op1) == IS_DOUBLE) {
+					ast->child[0] = zend_ast_create_cast(IS_DOUBLE, ast->child[0]);
+				}
+			}
+			if (ast->child[1]->kind == ZEND_AST_ZVAL) {
+				zval *op2;
+				op2 = zend_ast_get_zval(ast->child[1]);
+				if (Z_TYPE_P(op2) == IS_STRING) {
+					ast->child[1] = zend_ast_create_cast(IS_STRING, ast->child[1]);
+				} else if (Z_TYPE_P(op2) == IS_LONG) {
+					ast->child[1] = zend_ast_create_cast(IS_LONG, ast->child[1]);
+				} else if (Z_TYPE_P(op2) == IS_DOUBLE) {
+					ast->child[1] = zend_ast_create_cast(IS_DOUBLE, ast->child[1]);
+				}
 			}
 		}
 	}
