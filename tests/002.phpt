@@ -2,7 +2,7 @@
 Check for strings are concatenated by '+' operator
 --SKIPIF--
 <?php
-	extension_loaded('strplus') or die('skip strplus not available');
+	extension_loaded('jsplus') or die('skip jsplus not available');
 ?>
 --FILE--
 <?php

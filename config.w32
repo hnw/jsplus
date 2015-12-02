@@ -2,12 +2,12 @@
 // vim:ft=javascript
 
 // If your extension references something external, use ARG_WITH
-// ARG_WITH("strplus", "for strplus support", "no");
+// ARG_WITH("jsplus", "for jsplus support", "no");
 
 // Otherwise, use ARG_ENABLE
-// ARG_ENABLE("strplus", "enable strplus support", "no");
+// ARG_ENABLE("jsplus", "enable jsplus support", "no");
 
-if (PHP_STRPLUS != "no") {
-	EXTENSION("strplus", "strplus.c", PHP_EXTNAME_SHARED, "/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+if (PHP_JSPLUS != "no") {
+	EXTENSION("jsplus", "jsplus.c", PHP_EXTNAME_SHARED, "/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
 }
 

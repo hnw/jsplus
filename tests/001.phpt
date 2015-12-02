@@ -1,10 +1,10 @@
 --TEST--
-Check for strplus presence
+Check for jsplus presence
 --SKIPIF--
-<?php if (!extension_loaded("strplus")) print "skip"; ?>
+<?php if (!extension_loaded("jsplus")) print "skip"; ?>
 --FILE--
 <?php 
-echo "strplus extension is available";
+echo "jsplus extension is available";
 /*
 	you can add regression tests for your extension here
 
@@ -18,4 +18,4 @@ echo "strplus extension is available";
 */
 ?>
 --EXPECT--
-strplus extension is available
+jsplus extension is available

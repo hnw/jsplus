@@ -1,6 +1,6 @@
-# strplus [![Build Status](https://travis-ci.org/hnw/strplus.svg?branch=master)](https://travis-ci.org/hnw/strplus)
+# jsplus [![Build Status](https://travis-ci.org/hnw/jsplus.svg?branch=master)](https://travis-ci.org/hnw/jsplus)
 
-A PHP extension which changes behavior of '+' operator as string concatetation only when 2 operands are both string type.
+A PHP extension which changes behavior of '+' operator as string concatetation when either 1 operand is a string (like JavaScript).
 
 # Attention
 
@@ -13,8 +13,8 @@ This extension is JUST experimental. Do NOT use on production environment.
 # Installation
 
 ```
-git clone https://github.com/hnw/strplus.git
-cd strplus
+git clone https://github.com/hnw/jsplus.git
+cd jsplus
 phpize
 ./configure
 make
@@ -23,19 +23,19 @@ make install
 
 ## Ini settings
 
-### strplus.enabled
+### jsplus.enabled
 
-`strplus.enabled` can be set to `0` to disable strplus extension. (default: `1`)
+`jsplus.enabled` can be set to `0` to disable jsplus extension. (default: `1`)
 
 ## Example
 
 ```php
 <?php
-$x="123";
-$y="456";
-var_dump($x+$y); // string(6) "123456"
-$z=876;
-var_dump($x+$z); // int(999)
+$abc="abc";
+$twelve=12;
+var_dump($abc+"def");   // string(6) "abcdef"
+var_dump($twelve+"34"); // string(4) "1234"
+var_dump($twelve+34);   // int(46)
 ```
 
 ## License
@@ -49,5 +49,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-

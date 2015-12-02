@@ -18,41 +18,41 @@
 
 /* $Id$ */
 
-#ifndef PHP_STRPLUS_H
-#define PHP_STRPLUS_H
+#ifndef PHP_JSPLUS_H
+#define PHP_JSPLUS_H
 
-extern zend_module_entry strplus_module_entry;
-#define phpext_strplus_ptr &strplus_module_entry
+extern zend_module_entry jsplus_module_entry;
+#define phpext_jsplus_ptr &jsplus_module_entry
 
-#define PHP_STRPLUS_VERSION "0.1.0" /* Replace with version number for your extension */
+#define PHP_JSPLUS_VERSION "0.1.0" /* Replace with version number for your extension */
 
 #ifdef PHP_WIN32
-#	define PHP_STRPLUS_API __declspec(dllexport)
+#	define PHP_JSPLUS_API __declspec(dllexport)
 #elif defined(__GNUC__) && __GNUC__ >= 4
-#	define PHP_STRPLUS_API __attribute__ ((visibility("default")))
+#	define PHP_JSPLUS_API __attribute__ ((visibility("default")))
 #else
-#	define PHP_STRPLUS_API
+#	define PHP_JSPLUS_API
 #endif
 
 #ifdef ZTS
 #include "TSRM.h"
 #endif
 
-ZEND_BEGIN_MODULE_GLOBALS(strplus)
-	zend_bool enabled; /* if true, strplus is enabled (defaults to true) */
-ZEND_END_MODULE_GLOBALS(strplus)
+ZEND_BEGIN_MODULE_GLOBALS(jsplus)
+	zend_bool enabled; /* if true, jsplus is enabled (defaults to true) */
+ZEND_END_MODULE_GLOBALS(jsplus)
 
-/* Always refer to the globals in your function as STRPLUS_G(variable).
+/* Always refer to the globals in your function as JSPLUS_G(variable).
    You are encouraged to rename these macros something shorter, see
    examples in any other php module directory.
 */
-#define STRPLUS_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(strplus, v)
+#define JSPLUS_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(jsplus, v)
 
-#if defined(ZTS) && defined(COMPILE_DL_STRPLUS)
+#if defined(ZTS) && defined(COMPILE_DL_JSPLUS)
 ZEND_TSRMLS_CACHE_EXTERN();
 #endif
 
-#endif	/* PHP_STRPLUS_H */
+#endif	/* PHP_JSPLUS_H */
 
 
 /*

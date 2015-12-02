@@ -25,22 +25,22 @@
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
-#include "php_strplus.h"
+#include "php_jsplus.h"
 
-ZEND_DECLARE_MODULE_GLOBALS(strplus)
+ZEND_DECLARE_MODULE_GLOBALS(jsplus)
 
 /* True global resources - no need for thread safety here */
-static int le_strplus;
+static int le_jsplus;
 zend_ast_process_t original_ast_process = NULL;
 
 /* {{{ PHP_INI
  */
 PHP_INI_BEGIN()
-    STD_PHP_INI_BOOLEAN("strplus.enabled","1", PHP_INI_SYSTEM, OnUpdateBool, enabled, zend_strplus_globals, strplus_globals)
+    STD_PHP_INI_BOOLEAN("jsplus.enabled","1", PHP_INI_SYSTEM, OnUpdateBool, enabled, zend_jsplus_globals, jsplus_globals)
 PHP_INI_END()
 /* }}} */
 
-static zval *strplus_get_zval_ptr_tmpvar(zend_execute_data *execute_data, uint32_t var)
+static zval *jsplus_get_zval_ptr_tmpvar(zend_execute_data *execute_data, uint32_t var)
 {
 	zval *ret = EX_VAR(var);
 
@@ -49,7 +49,7 @@ static zval *strplus_get_zval_ptr_tmpvar(zend_execute_data *execute_data, uint32
 	return ret;
 }
 
-static zval *strplus_get_zval_ptr_cv(zend_execute_data *execute_data, uint32_t var)
+static zval *jsplus_get_zval_ptr_cv(zend_execute_data *execute_data, uint32_t var)
 {
         zval *ret = EX_VAR(var);
 
@@ -61,30 +61,30 @@ static zval *strplus_get_zval_ptr_cv(zend_execute_data *execute_data, uint32_t v
         return ret;
 }
 
-static zval *strplus_get_zval_ptr(zend_execute_data *execute_data, int op_type, znode_op op)
+static zval *jsplus_get_zval_ptr(zend_execute_data *execute_data, int op_type, znode_op op)
 {
 	if (op_type & (IS_TMP_VAR|IS_VAR)) {
-		return strplus_get_zval_ptr_tmpvar(execute_data, op.var);
+		return jsplus_get_zval_ptr_tmpvar(execute_data, op.var);
 	} else {
 		if (op_type == IS_CONST) {
 			return EX_CONSTANT(op);
 		} else if (op_type == IS_CV) {
-			return strplus_get_zval_ptr_cv(execute_data, op.var);
+			return jsplus_get_zval_ptr_cv(execute_data, op.var);
 		} else {
 			return NULL;
 		}
 	}
 }
 
-static int strplus_add_handler(zend_execute_data *execute_data)
+static int jsplus_add_handler(zend_execute_data *execute_data)
 {
 	zval *op1, *op2;
-	if (STRPLUS_G(enabled)) {
+	if (JSPLUS_G(enabled)) {
 		const zend_op *cur_opcode = EG(current_execute_data)->opline;
 		const zend_op *opline = execute_data->opline;
 
-		op1 = strplus_get_zval_ptr(execute_data, opline->op1_type, opline->op1);
-		op2 = strplus_get_zval_ptr(execute_data, opline->op2_type, opline->op2);
+		op1 = jsplus_get_zval_ptr(execute_data, opline->op1_type, opline->op1);
+		op2 = jsplus_get_zval_ptr(execute_data, opline->op2_type, opline->op2);
 
 		if (Z_TYPE_P(op1) == IS_STRING && Z_TYPE_P(op2) == IS_STRING) {
 			if (cur_opcode->opcode == ZEND_ADD) {
@@ -108,12 +108,12 @@ static int ast_is_decl(zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
-void strplus_ast_process(zend_ast *ast)
+void jsplus_ast_process(zend_ast *ast)
 {
 	int i, num_children = 0;
 	zend_ast **children;
 
-	if (!STRPLUS_G(enabled)) {
+	if (!JSPLUS_G(enabled)) {
 		return;
 	}
 
@@ -132,7 +132,7 @@ void strplus_ast_process(zend_ast *ast)
 
 	for (i = 0; i < num_children; i++) {
 		if (children[i]) {
-			strplus_ast_process(children[i]);
+			jsplus_ast_process(children[i]);
 		}
 	}
 	if (ast->kind == ZEND_AST_BINARY_OP) {
@@ -150,19 +150,19 @@ void strplus_ast_process(zend_ast *ast)
 	}
 }
 
-/* {{{ php_strplus_init_globals
+/* {{{ php_jsplus_init_globals
  */
-static void php_strplus_init_globals(zend_strplus_globals *strplus_globals)
+static void php_jsplus_init_globals(zend_jsplus_globals *jsplus_globals)
 {
-	strplus_globals->enabled = 1;
+	jsplus_globals->enabled = 1;
 }
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION
  */
-PHP_MINIT_FUNCTION(strplus)
+PHP_MINIT_FUNCTION(jsplus)
 {
-	ZEND_INIT_MODULE_GLOBALS(strplus, php_strplus_init_globals, NULL);
+	ZEND_INIT_MODULE_GLOBALS(jsplus, php_jsplus_init_globals, NULL);
 
 	REGISTER_INI_ENTRIES();
 
@@ -172,7 +172,7 @@ PHP_MINIT_FUNCTION(strplus)
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION
  */
-PHP_MSHUTDOWN_FUNCTION(strplus)
+PHP_MSHUTDOWN_FUNCTION(jsplus)
 {
 	UNREGISTER_INI_ENTRIES();
 
@@ -183,17 +183,17 @@ PHP_MSHUTDOWN_FUNCTION(strplus)
 /* Remove if there's nothing to do at request start */
 /* {{{ PHP_RINIT_FUNCTION
  */
-PHP_RINIT_FUNCTION(strplus)
+PHP_RINIT_FUNCTION(jsplus)
 {
-#if defined(COMPILE_DL_STRPLUS) && defined(ZTS)
+#if defined(COMPILE_DL_JSPLUS) && defined(ZTS)
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 
 	original_ast_process = zend_ast_process;
-	zend_ast_process = strplus_ast_process;
+	zend_ast_process = jsplus_ast_process;
 
-	zend_set_user_opcode_handler(ZEND_ADD, strplus_add_handler);
-	zend_set_user_opcode_handler(ZEND_ASSIGN_ADD, strplus_add_handler);
+	zend_set_user_opcode_handler(ZEND_ADD, jsplus_add_handler);
+	zend_set_user_opcode_handler(ZEND_ASSIGN_ADD, jsplus_add_handler);
 
 	return SUCCESS;
 }
@@ -202,7 +202,7 @@ PHP_RINIT_FUNCTION(strplus)
 /* Remove if there's nothing to do at request end */
 /* {{{ PHP_RSHUTDOWN_FUNCTION
  */
-PHP_RSHUTDOWN_FUNCTION(strplus)
+PHP_RSHUTDOWN_FUNCTION(jsplus)
 {
 	zend_ast_process = original_ast_process;
 	original_ast_process = NULL;
@@ -216,46 +216,46 @@ PHP_RSHUTDOWN_FUNCTION(strplus)
 
 /* {{{ PHP_MINFO_FUNCTION
  */
-PHP_MINFO_FUNCTION(strplus)
+PHP_MINFO_FUNCTION(jsplus)
 {
 	php_info_print_table_start();
-	php_info_print_table_header(2, "strplus support", "enabled");
+	php_info_print_table_header(2, "jsplus support", "enabled");
 	php_info_print_table_end();
 
 	DISPLAY_INI_ENTRIES();
 }
 /* }}} */
 
-/* {{{ strplus_functions[]
+/* {{{ jsplus_functions[]
  *
- * Every user visible function must have an entry in strplus_functions[].
+ * Every user visible function must have an entry in jsplus_functions[].
  */
-const zend_function_entry strplus_functions[] = {
-	PHP_FE_END	/* Must be the last line in strplus_functions[] */
+const zend_function_entry jsplus_functions[] = {
+	PHP_FE_END	/* Must be the last line in jsplus_functions[] */
 };
 /* }}} */
 
-/* {{{ strplus_module_entry
+/* {{{ jsplus_module_entry
  */
-zend_module_entry strplus_module_entry = {
+zend_module_entry jsplus_module_entry = {
 	STANDARD_MODULE_HEADER,
-	"strplus",
-	strplus_functions,
-	PHP_MINIT(strplus),
-	PHP_MSHUTDOWN(strplus),
-	PHP_RINIT(strplus),		/* Replace with NULL if there's nothing to do at request start */
-	PHP_RSHUTDOWN(strplus),	/* Replace with NULL if there's nothing to do at request end */
-	PHP_MINFO(strplus),
-	PHP_STRPLUS_VERSION,
+	"jsplus",
+	jsplus_functions,
+	PHP_MINIT(jsplus),
+	PHP_MSHUTDOWN(jsplus),
+	PHP_RINIT(jsplus),		/* Replace with NULL if there's nothing to do at request start */
+	PHP_RSHUTDOWN(jsplus),	/* Replace with NULL if there's nothing to do at request end */
+	PHP_MINFO(jsplus),
+	PHP_JSPLUS_VERSION,
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
 
-#ifdef COMPILE_DL_STRPLUS
+#ifdef COMPILE_DL_JSPLUS
 #ifdef ZTS
 ZEND_TSRMLS_CACHE_DEFINE();
 #endif
-ZEND_GET_MODULE(strplus)
+ZEND_GET_MODULE(jsplus)
 #endif
 
 /*

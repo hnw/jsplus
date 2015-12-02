@@ -1,10 +1,10 @@
 --TEST--
-Check for strings are not concatenated by '+' operator when strplus.enabled=false
+Check for strings are not concatenated by '+' operator when jsplus.enabled=false
 --INI--
-strplus.enabled=false
+jsplus.enabled=false
 --SKIPIF--
 <?php
-	extension_loaded('strplus') or die('skip strplus not available');
+	extension_loaded('jsplus') or die('skip jsplus not available');
 ?>
 --FILE--
 <?php
