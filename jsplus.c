@@ -86,7 +86,13 @@ static int jsplus_add_handler(zend_execute_data *execute_data)
 		op1 = jsplus_get_zval_ptr(execute_data, opline->op1_type, opline->op1);
 		op2 = jsplus_get_zval_ptr(execute_data, opline->op2_type, opline->op2);
 
-		if (Z_TYPE_P(op1) == IS_STRING && Z_TYPE_P(op2) == IS_STRING) {
+		if (Z_TYPE_P(op1) == IS_STRING || Z_TYPE_P(op2) == IS_STRING) {
+			if (Z_TYPE_P(op1) != IS_STRING && opline->op1_type == IS_CONST) {
+				ZVAL_STR(op1, zval_get_string(op1));
+			}
+			if (Z_TYPE_P(op2) != IS_STRING && opline->op2_type == IS_CONST) {
+				ZVAL_STR(op2, zval_get_string(op2));
+			}
 			if (cur_opcode->opcode == ZEND_ADD) {
 				return ZEND_USER_OPCODE_DISPATCH_TO | ZEND_CONCAT;
 			} else if (cur_opcode->opcode == ZEND_ASSIGN_ADD) {
@@ -143,7 +149,7 @@ void jsplus_ast_process(zend_ast *ast)
 			zval *op1, *op2;
 			op1 = zend_ast_get_zval(ast->child[0]);
 			op2 = zend_ast_get_zval(ast->child[1]);
-			if (Z_TYPE_P(op1) == IS_STRING && Z_TYPE_P(op2) == IS_STRING) {
+			if (Z_TYPE_P(op1) == IS_STRING || Z_TYPE_P(op2) == IS_STRING) {
 				ast->attr = ZEND_CONCAT;
 			}
 		}
